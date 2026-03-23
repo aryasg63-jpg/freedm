@@ -1,0 +1,46 @@
+[debug] [2026-03-19T11:28:09.668Z] ----------------------------------------------------------------------
+[debug] [2026-03-19T11:28:09.681Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Administrator\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy
+[debug] [2026-03-19T11:28:09.682Z] CLI Version:   15.11.0
+[debug] [2026-03-19T11:28:09.682Z] Platform:      win32
+[debug] [2026-03-19T11:28:09.682Z] Node Version:  v24.14.0
+[debug] [2026-03-19T11:28:09.682Z] Time:          Thu Mar 19 2026 19:28:09 GMT+0800 (Central Indonesia Time)
+[debug] [2026-03-19T11:28:09.683Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-19T11:28:13.214Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-19T11:28:13.215Z] > authorizing via signed-in user (aryasg63@gmail.com)
+[debug] [2026-03-19T11:28:13.215Z] [iam] checking project geotrack-app-52d2c for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-03-19T11:28:13.218Z] Checked if tokens are valid: true, expires at: 1773922705107
+[debug] [2026-03-19T11:28:13.219Z] Checked if tokens are valid: true, expires at: 1773922705107
+[debug] [2026-03-19T11:28:13.227Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/geotrack-app-52d2c:testIamPermissions [none]
+[debug] [2026-03-19T11:28:13.228Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/geotrack-app-52d2c:testIamPermissions  x-goog-user-project=geotrack-app-52d2c
+[debug] [2026-03-19T11:28:13.228Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/geotrack-app-52d2c:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-03-19T11:28:14.649Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/geotrack-app-52d2c:testIamPermissions 200
+[debug] [2026-03-19T11:28:14.650Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/geotrack-app-52d2c:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-03-19T11:28:14.654Z] Checked if tokens are valid: true, expires at: 1773922705107
+[debug] [2026-03-19T11:28:14.654Z] Checked if tokens are valid: true, expires at: 1773922705107
+[debug] [2026-03-19T11:28:14.656Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/geotrack-app-52d2c [none]
+[debug] [2026-03-19T11:28:15.425Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/geotrack-app-52d2c 200
+[debug] [2026-03-19T11:28:15.426Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/geotrack-app-52d2c {"projectId":"geotrack-app-52d2c","projectNumber":"404077683049","displayName":"geotrack-app","name":"projects/geotrack-app-52d2c","resources":{"hostingSite":"geotrack-app-52d2c"},"state":"ACTIVE","etag":"1_f933b401-8a8e-4163-ac59-097a1eac9469"}
+[info] 
+[info] === Deploying to 'geotrack-app-52d2c'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-03-19T11:28:15.512Z] Checked if tokens are valid: true, expires at: 1773922705107
+[debug] [2026-03-19T11:28:15.512Z] Checked if tokens are valid: true, expires at: 1773922705107
+[debug] [2026-03-19T11:28:15.513Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/geotrack-app-52d2c/versions [none]
+[debug] [2026-03-19T11:28:15.514Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/geotrack-app-52d2c/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-03-19T11:28:17.595Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/geotrack-app-52d2c/versions 200
+[debug] [2026-03-19T11:28:17.596Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/geotrack-app-52d2c/versions {"name":"projects/404077683049/sites/geotrack-app-52d2c/versions/66bb41b73613e793","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[geotrack-app-52d2c]: beginning deploy... 
+[info] i  hosting[geotrack-app-52d2c]: found 31541 files in . 
+[debug] [2026-03-19T11:28:25.468Z] [hosting] uploading with 200 concurrency
+[debug] [2026-03-19T11:28:25.476Z] [hosting] hash cache [] not populated
+[debug] [2026-03-19T11:28:25.548Z] Error: EBUSY: resource busy or locked, open 'C:\Users\Administrator\ntuser.dat.LOG2'
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-03-19T11:28:25.563Z] Error: EBUSY: resource busy or locked, open 'C:\Users\Administrator\ntuser.dat.LOG1'
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-03-19T11:28:25.576Z] Error: EBUSY: resource busy or locked, open 'C:\Users\Administrator\NTUSER.DAT'
+[error] 
+[error] Error: An unexpected error has occurred.

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — GeoTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --card: #1a2235;
+      --border: rgba(99,179,237,0.15);
+      --accent: #63b3ed;
+      --accent2: #f6ad55;
+      --green: #68d391;
+      --red: #fc8181;
+      --text: #e2e8f0;
+      --muted: #718096;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
+
+    /* NAV */
+    nav {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 28px;
+      background:rgba(10,14,26,0.95);
+      border-bottom:1px solid var(--border);
+      z-index:1000; flex-shrink:0;
+    }
+    .nav-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; color:var(--accent); }
+    .nav-logo span { color:var(--accent2); }
+    .nav-right { display:flex; align-items:center; gap:12px; }
+    .badge {
+      background:rgba(99,179,237,0.1); border:1px solid rgba(99,179,237,0.3);
+      border-radius:100px; padding:5px 14px;
+      font-size:0.78rem; color:var(--accent);
+    }
+    .btn-refresh {
+      padding:8px 16px; border-radius:8px; cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:0.82rem; font-weight:500;
+      border:1px solid var(--border); background:transparent; color:var(--muted);
+      transition:all 0.2s;
+    }
+    .btn-refresh:hover { background:rgba(99,179,237,0.1); color:var(--accent); border-color:var(--accent); }
+
+    /* LAYOUT */
+    .main { display:flex; flex:1; overflow:hidden; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:320px; flex-shrink:0;
+      background:var(--surface);
+      border-right:1px solid var(--border);
+      display:flex; flex-direction:column;
+      overflow:hidden;
+    }
+    .sidebar-head {
+      padding:16px 20px;
+      border-bottom:1px solid var(--border);
+      font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem;
+    }
+    .sidebar-head span { color:var(--muted); font-family:'DM Sans',sans-serif; font-weight:400; font-size:0.82rem; margin-left:8px; }
+    .sidebar-list { overflow-y:auto; flex:1; padding:8px; }
+
+    .user-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:10px; padding:12px 14px; margin-bottom:8px;
+      cursor:pointer; transition:all 0.2s;
+    }
+    .user-card:hover { border-color:var(--accent); transform:translateX(3px); }
+    .user-card.active { border-color:var(--accent); background:rgba(99,179,237,0.08); }
+    .user-email { font-size:0.85rem; font-weight:500; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-coords { font-size:0.75rem; color:var(--muted); font-family:monospace; }
+    .user-time { font-size:0.72rem; color:var(--muted); margin-top:4px; }
+
+    /* MAP */
+    #map { flex:1; z-index:1; }
+
+    /* LOADING */
+    .loading-overlay {
+      position:absolute; inset:0; background:rgba(10,14,26,0.8);
+      display:flex; align-items:center; justify-content:center;
+      z-index:999; flex-direction:column; gap:12px;
+    }
+    .loading-overlay.hide { display:none; }
+    .spinner-big {
+      width:40px; height:40px;
+      border:3px solid rgba(99,179,237,0.2);
+      border-top-color:var(--accent);
+      border-radius:50%; animation:spin 0.8s linear infinite;
+    }
+    .loading-text { font-size:0.88rem; color:var(--muted); }
+
+    /* EMPTY */
+    .empty-state {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; height:200px; color:var(--muted);
+      font-size:0.85rem; gap:8px;
+    }
+    .empty-state .icon { font-size:2rem; }
+
+    /* STATS BAR */
+    .stats-bar {
+      display:flex; gap:16px; padding:10px 20px;
+      background:var(--surface); border-bottom:1px solid var(--border);
+      flex-shrink:0;
+    }
+    .stat { font-size:0.8rem; color:var(--muted); }
+    .stat strong { color:var(--text); font-family:'Syne',sans-serif; }
+
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    @media(max-width:600px) {
+      .main { flex-direction:column; }
+      .sidebar { width:100%; height:200px; border-right:none; border-bottom:1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Geo<span>Track</span> <span style="font-size:0.75rem;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400;">Admin</span></div>
+  <div class="nav-right">
+    <div class="badge" id="totalBadge">Memuat...</div>
+    <button class="btn-refresh" onclick="loadData()">🔄 Refresh</button>
+    <button class="btn-refresh" style="color:#fc8181;border-color:rgba(252,129,129,0.3);" onclick="hapusSemua()">🗑️ Hapus Semua</button>
+  </div>
+</nav>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">Total Data: <strong id="statTotal">-</strong></div>
+  <div class="stat">Dengan Lokasi: <strong id="statLokasi">-</strong></div>
+  <div class="stat">Tanpa Lokasi: <strong id="statTanpa">-</strong></div>
+</div>
+
+<!-- MAIN -->
+<div class="main" style="position:relative;">
+
+  <!-- LOADING -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-big"></div>
+    <div class="loading-text">Memuat data dari Firestore...</div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-head">
+      Daftar User <span id="sidebarCount"></span>
+    </div>
+    <div class="sidebar-list" id="sidebarList">
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div>Belum ada data</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map"></div>
+
+</div>
+
+<!-- LEAFLET JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, orderBy, query, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB5Bh8q4h_Umav-INVDAIOKdmq125Tcs28",
+  authDomain: "geotrack-app-52d2c.firebaseapp.com",
+  projectId: "geotrack-app-52d2c",
+  storageBucket: "geotrack-app-52d2c.firebasestorage.app",
+  messagingSenderId: "404077683049",
+  appId: "1:404077683049:web:5df6ff0caf87735f265df8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// TOAST
+function showToast(msg, type='success') {
+  let t = document.getElementById('adminToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'adminToast';
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;
+      background:#1a2235;border-radius:10px;padding:14px 20px;
+      font-size:0.88rem;box-shadow:0 8px 32px rgba(0,0,0,0.4);
+      transition:all 0.3s;max-width:300px;`;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.borderLeft = type === 'success' ? '3px solid #68d391' : '3px solid #fc8181';
+  t.style.color = type === 'success' ? '#68d391' : '#fc8181';
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 3000);
+}
+
+// Init Leaflet Map
+const map = L.map('map').setView([0, 0], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+const markerIcon = L.divIcon({
+  html: `<div style="background:#63b3ed;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>`,
+  className: '', iconSize: [14, 14], iconAnchor: [7, 7]
+});
+
+let allMarkers = [];
+
+// REALTIME onSnapshot — baca logins + locations sekaligus
+window.loadData = function() {
+  document.getElementById('loadingOverlay').classList.remove('hide');
+};
+
+let docsLogins = [];
+let docsLocations = [];
+
+function renderAll() {
+  allMarkers.forEach(m => map.removeLayer(m));
+  allMarkers = [];
+  document.getElementById('sidebarList').innerHTML = '';
+
+  // Gabung & urutkan berdasarkan waktu terbaru
+  const semua = [
+    ...docsLogins.map(d => ({ ...d, _type: 'login' })),
+    ...docsLocations.map(d => ({ ...d, _type: 'lokasi' }))
+  ].sort((a, b) => {
+    const tA = a.time?.toDate?.() || new Date(a.time?.seconds * 1000);
+    const tB = b.time?.toDate?.() || new Date(b.time?.seconds * 1000);
+    return tB - tA;
+  });
+
+  const withLoc = semua.filter(d => d.latitude && d.longitude);
+  document.getElementById('statTotal').textContent = semua.length;
+  document.getElementById('statLokasi').textContent = withLoc.length;
+  document.getElementById('statTanpa').textContent = semua.length - withLoc.length;
+  document.getElementById('totalBadge').textContent = `${semua.length} data`;
+  document.getElementById('sidebarCount').textContent = `(${semua.length})`;
+
+  if (semua.length === 0) {
+    document.getElementById('sidebarList').innerHTML = `
+      <div class="empty-state"><div class="icon">📭</div><div>Belum ada data</div></div>`;
+    return;
+  }
+
+  semua.forEach((data) => {
+    const time = data.time?.toDate?.() || new Date(data.time?.seconds * 1000) || new Date();
+    const timeStr = time.toLocaleString('id-ID');
+    const hasLoc = data.latitude && data.longitude;
+    const isLogin = data._type === 'login';
+
+    const card = document.createElement('div');
+    card.className = 'user-card';
+    card.innerHTML = `
+      <div style="font-size:0.7rem;font-weight:600;margin-bottom:4px;color:${isLogin ? '#63b3ed' : '#68d391'};">
+        ${isLogin ? '🔐 LOGIN' : '📍 LOKASI'}
+      </div>
+      <div class="user-email">${isLogin ? '📧 ' + (data.email || '-') : '👤 ' + (data.name || '-')}</div>
+      <div class="user-coords">${hasLoc ? `📍 ${data.latitude.toFixed(5)}, ${data.longitude.toFixed(5)}` : '📍 Lokasi tidak tersedia'}</div>
+      <div class="user-time">🕐 ${timeStr}</div>
+    `;
+
+    if (hasLoc) {
+      const color = isLogin ? '#63b3ed' : '#68d391';
+      const icon = L.divIcon({
+        html: `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>`,
+        className: '', iconSize: [14, 14], iconAnchor: [7, 7]
+      });
+      const marker = L.marker([data.latitude, data.longitude], { icon })
+        .addTo(map)
+        .bindPopup(`
+          <div style="font-family:'DM Sans',sans-serif;min-width:180px;">
+            <div style="font-weight:600;margin-bottom:4px;color:${color}">${isLogin ? '🔐 Login' : '📍 Lokasi'}</div>
+            <div style="font-size:0.85rem;">${isLogin ? '📧 ' + (data.email || '-') : '👤 ' + (data.name || '-')}</div>
+            <div style="font-size:0.8rem;color:#666;margin-top:4px;">📍 ${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}</div>
+            <div style="font-size:0.78rem;color:#888;margin-top:4px;">🕐 ${timeStr}</div>
+          </div>
+        `);
+      allMarkers.push(marker);
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.user-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        map.flyTo([data.latitude, data.longitude], 15, { duration: 1.5 });
+        marker.openPopup();
+      });
+    }
+    document.getElementById('sidebarList').appendChild(card);
+  });
+
+  if (allMarkers.length > 0) {
+    const group = L.featureGroup(allMarkers);
+    map.fitBounds(group.getBounds().pad(0.2));
+  }
+
+  document.getElementById('loadingOverlay').classList.add('hide');
+}
+
+// Listen logins
+const qLogins = query(collection(db, "logins"), orderBy("time", "desc"));
+onSnapshot(qLogins, (snap) => {
+  docsLogins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderAll();
+}, (e) => showToast('Gagal logins: ' + e.message, 'error'));
+
+// Listen locations
+const qLocations = query(collection(db, "locations"), orderBy("time", "desc"));
+onSnapshot(qLocations, (snap) => {
+  docsLocations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderAll();
+}, (e) => showToast('Gagal locations: ' + e.message, 'error'));
+
+// HAPUS SEMUA — hapus kedua collection
+window.hapusSemua = async function() {
+  const konfirmasi = confirm('Yakin hapus SEMUA data logins & locations? Tidak bisa dibatalkan!');
+  if (!konfirmasi) return;
+  try {
+    const [snapL, snapLoc] = await Promise.all([
+      getDocs(collection(db, "logins")),
+      getDocs(collection(db, "locations"))
+    ]);
+    const hapus = [
+      ...snapL.docs.map(d => deleteDoc(doc(db, "logins", d.id))),
+      ...snapLoc.docs.map(d => deleteDoc(doc(db, "locations", d.id)))
+    ];
+    await Promise.all(hapus);
+    showToast('Semua data berhasil dihapus!', 'success');
+  } catch(e) {
+    showToast('Gagal hapus: ' + e.message, 'error');
+  }
+};
+</script>
+
+</body>
+</html>
